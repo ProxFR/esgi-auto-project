@@ -1,0 +1,43 @@
+metrics:
+  global:
+    scrape_interval: 1m
+  wal_directory: '/tmp/wal-grafana-agent'
+  configs:
+    - name: default
+      scrape_configs:
+        - job_name: "node_exporter"
+          metrics_path: /integrations/node_exporter/metrics
+          static_configs:
+            - targets: ["localhost:9090"]
+              labels:
+                instance: "{{ ansible_default_ipv4["address"] }}"
+          relabel_configs:
+            - source_labels: [__address_]
+              target_label: instance
+              replacement: ''
+              regex: '([^:]+)(:[0-9]+)?'
+      remote_write:
+      - url: "http://{{ grafana_stack_ipv4 }}:9090/api/v1/write"
+      
+logs:
+  configs:
+  - name: default
+    positions:
+      filename: /tmp/positions.yaml
+    scrape_configs:
+      - job_name: varlogs
+        static_configs:
+          - targets: [localhost]
+            labels:
+              instance: "{{ ansible_default_ipv4["address"] }}"
+              job: varlogs
+              __path__: /var/log/*log
+              
+    clients:
+      - url: "http://{{ grafana_stack_ipv4 }}:3100/loki/api/v1/push"
+integrations:
+  agent:
+    enabled: true
+  node_exporter:
+    enabled: true
+    include_exporter_metrics: true

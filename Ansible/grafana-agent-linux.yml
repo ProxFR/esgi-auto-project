@@ -1,0 +1,5 @@
+- name: install grafana agent
+  hosts: linux-agent
+  become: yes
+  roles:
+  - grafana-agent-linux

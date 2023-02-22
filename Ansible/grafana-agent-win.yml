@@ -1,0 +1,4 @@
+- name: install grafana agent
+  hosts: windows-agent
+  roles:
+  - grafana-agent-win

@@ -1,0 +1,22 @@
+# Config
+[all:vars]
+ansible_connection=ssh
+ansible_user=ansible
+ansible_ssh_user=ansible
+
+[windows-agent:vars]
+ansible_connection=winrm
+ansible_user=administrator
+ansible_password=ansible
+ansible_winrm_server_cert_validation=ignore
+
+[grafana]
+10.0.0.81
+
+[linux-agent]
+10.0.0.81
+10.0.0.82
+
+[windows-agent]
+10.0.0.83
+

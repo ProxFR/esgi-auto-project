@@ -1,0 +1,83 @@
+- name: install pip3
+  apt: name=python3-pip state=present
+
+- name: install certain python modules for docker
+  pip:
+    name: "{{ item.name }}"
+    state: present
+  with_items:
+  - { name: docker-compose }
+
+- name: install docker dependencies
+  apt:
+    name: ca-certificates,curl,gnupg,lsb-release
+    state: latest
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: add docker gpg key
+  apt_key:
+    url: "https://download.docker.com/linux/debian/gpg"
+    validate_certs: no
+
+- name: add docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable"
+    state: present
+    validate_certs: no
+
+- name: install docker
+  apt:
+    name: docker-ce,docker-ce-cli,containerd.io,docker-buildx-plugin,docker-compose-plugin
+    state: latest
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Create grafana-stack directory
+  ansible.builtin.file:
+    path: /srv/grafana-stack
+    state: directory
+    mode: '0755'
+
+- name: copy prometheus.yml
+  copy:
+    src: files/prometheus.yml
+    dest: /srv/grafana-stack/prometheus.yml
+
+- name: copy loki.yml
+  copy:
+    src: files/loki.yml
+    dest: /srv/grafana-stack/loki.yml
+
+- name: copy Docker Compose files
+  copy:
+    src: files/docker-compose.yml
+    dest: /srv/grafana-stack/docker-compose.yml
+
+- name: provisioning dashboards to grafana
+  copy:
+    src: provisioning/dashboards/
+    dest: "/srv/grafana-stack/grafana/provisioning/dashboards/"
+
+- name: Create datasources folder
+  ansible.builtin.file:
+    path: /srv/grafana-stack/grafana/provisioning/datasources
+    state: directory
+    mode: '0755'
+
+- name: provisioning loki datasource to grafana
+  template:
+    src: provisioning/datasources/loki.yml.j2
+    dest: "/srv/grafana-stack/grafana/provisioning/datasources/loki.yml"
+
+- name: provisioning prometheus datasources to grafana
+  template:
+    src: provisioning/datasources/prometheus.yml.j2
+    dest: "/srv/grafana-stack/grafana/provisioning/datasources/prometheus.yml"
+
+- name: deploy Docker Compose stack
+  community.docker.docker_compose:
+    project_src: /srv/grafana-stack
+    files:
+    - docker-compose.yml
+

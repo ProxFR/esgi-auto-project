@@ -1,0 +1,5 @@
+- name: install monitoring stack
+  hosts: grafana
+  become: yes
+  roles:
+  - grafana-docker

@@ -1,0 +1,64 @@
+integrations:
+  windows_exporter:
+    enabled: true
+  prometheus_remote_write:
+    - url: http://{{ grafana_stack_ipv4 }}:9090/api/v1/write
+  labels:
+    role: Serveur
+
+
+logs:
+  # Choose a directory to save the last read position of log files at.
+  # This directory will be created if it doesn't already exist.
+  positions_directory: "C:\\Program Files\\Grafana Agent"
+  configs:
+    - name: windows
+      # Loki endpoint to push logs to
+      clients:
+        - url: http://{{ grafana_stack_ipv4 }}:3100/loki/api/v1/push
+      scrape_configs:
+      - job_name: integrations/windows-exporter-application
+        windows_events:
+          use_incoming_timestamp: true
+          bookmark_path: "./bookmark-application.xml"
+          eventlog_name: "Application"
+          xpath_query: '*'
+          labels:
+            job: integrations/windows_exporter
+        relabel_configs:
+          - source_labels: ['computer']
+            regex: '([^.]+)\..+' # Match everythings before the first "." in the FQDN
+            target_label: 'agent_hostname'
+            replacement: "$1"
+        pipeline_stages:
+          - json:
+              expressions:
+                source: source
+          - labels:
+              source:
+      - job_name: integrations/windows-exporter-system
+        windows_events:
+          use_incoming_timestamp: true
+          bookmark_path: "./bookmark-system.xml"
+          eventlog_name: "System"
+          xpath_query: '*'
+          labels:
+            job: integrations/windows_exporter
+        relabel_configs:
+          - source_labels: ['computer']
+            regex: '([^.]+)\..+' # Match everythings before the first "." in the FQDN
+            target_label: 'agent_hostname'
+            replacement: "$1"
+        pipeline_stages:
+          - json:
+              expressions:
+                source: source
+          - labels:
+              source:
+
+metrics:
+  wal_directory: C:\ProgramData\grafana-agent-wal
+  global:
+    scrape_interval: 10s
+  configs:
+    - name: integrations

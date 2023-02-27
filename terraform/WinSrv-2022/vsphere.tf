@@ -40,6 +40,8 @@ data "vsphere_virtual_machine" "winsrv2022" {
 
 #Set VM parameteres
 resource "vsphere_virtual_machine" "esgi-win" {
+
+  # For each VM inside the virtual_machines map, create a VM resource
   for_each = var.virtual_machines
 
   name             = each.key
@@ -67,8 +69,8 @@ resource "vsphere_virtual_machine" "esgi-win" {
     customize {
       windows_options {
         computer_name = each.key
-        time_zone     = 105
-        admin_password = "ansible"
+        time_zone     = 105 #Europe/Paris
+        admin_password = "ansible" #Administator/ansible
       }
       network_interface {
         ipv4_address = each.value.ipv4_address
